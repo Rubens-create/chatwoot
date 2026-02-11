@@ -13,6 +13,7 @@ import { conversationListPageURL } from 'dashboard/helper/URLHelper';
 import { snoozedReopenTime } from 'dashboard/helper/snoozeHelpers';
 import { useInbox } from 'dashboard/composables/useInbox';
 import { useI18n } from 'vue-i18n';
+import WootButton from 'dashboard/components/ui/WootButton.vue';
 
 const props = defineProps({
   chat: {
@@ -92,6 +93,34 @@ const hasMultipleInboxes = computed(
 const hasSlaPolicyId = computed(() => props.chat?.sla_policy_id);
 </script>
 
+const aiLabel = 'bot_desligado';
+
+const conversationLabels = computed(() => currentChat.value?.labels || []);
+
+const isAIAgentEnabled = computed(() =>
+  conversationLabels.value.includes(aiLabel)
+);
+
+const toggleAIAgent = async () => {
+  try {
+    if (isAIAgentEnabled.value) {
+      await store.dispatch('conversationLabels/remove', {
+        conversationId: currentChat.value.id,
+        labels: [aiLabel],
+      });
+    } else {
+      await store.dispatch('conversationLabels/add', {
+        conversationId: currentChat.value.id,
+        labels: [aiLabel],
+      });
+    }
+  } catch (error) {
+    console.error('Erro ao alternar Agente IA', error);
+  }
+};
+
+
+
 <template>
   <div
     ref="conversationHeader"
@@ -151,6 +180,18 @@ const hasSlaPolicyId = computed(() => props.chat?.sla_policy_id);
         :parent-width="width"
         class="hidden md:flex"
       />
+
+      <WootButton
+  size="small"
+  :variant="isAIAgentEnabled ? 'smooth' : 'primary'"
+  :color-scheme="isAIAgentEnabled ? 'success' : 'primary'"
+  @click="toggleAIAgent"
+>
+  <span v-if="isAIAgentEnabled">Agente IA Ativo</span>
+  <span v-else>Habilitar Agente IA</span>
+</WootButton>
+
+      
       <MoreActions :conversation-id="currentChat.id" />
     </div>
   </div>
